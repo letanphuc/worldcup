@@ -9,6 +9,14 @@ use tabled::{
 
 use crate::api::MatchInfo;
 
+const BIG_TEAMS: &[&str] = &[
+    "ARG", "ESP", "FRA", "ENG", "POR", "BRA", "MAR", "NED", "BEL", "GER",
+];
+
+fn is_big_team(abbr: &str) -> bool {
+    BIG_TEAMS.contains(&abbr)
+}
+
 fn flag(abbr: &str) -> &'static str {
     match abbr {
         "ALB" => "🇦🇱",
@@ -263,6 +271,7 @@ fn time_status_text(match_info: &MatchInfo) -> (String, Option<Color>) {
 
 pub struct RowStyle {
     time_color: Option<Color>,
+    match_color: Option<Color>,
 }
 
 pub fn build_table_rows(events: &[MatchInfo], is_next: bool) -> Vec<(MatchRow, RowStyle)> {
@@ -279,13 +288,21 @@ pub fn build_table_rows(events: &[MatchInfo], is_next: bool) -> Vec<(MatchRow, R
         })
         .map(|e| {
             let (time, time_color) = time_status_text(e);
+            let big_a = is_big_team(&e.code_a);
+            let big_b = is_big_team(&e.code_b);
             let match_ = format!("{} {} \x1b[90mvs\x1b[1;37m {} {}", flag(&e.code_a), e.team_a, flag(&e.code_b), e.team_b);
             let venue = e.venue.clone();
+            let match_color = if big_a || big_b {
+                Some(Color::FG_YELLOW | Color::BOLD)
+            } else {
+                None
+            };
 
             (
                 MatchRow { time, match_, venue },
                 RowStyle {
                     time_color,
+                    match_color,
                 },
             )
         })
@@ -310,7 +327,11 @@ pub fn render_table(rows: Vec<(MatchRow, RowStyle)>) -> String {
         if let Some(color) = &style.time_color {
             table.with(Modify::new(Cell::new(row_idx, 0)).with(color.clone()));
         }
-        table.with(Modify::new(Cell::new(row_idx, 1)).with(match_style.clone()));
+        if let Some(color) = &style.match_color {
+            table.with(Modify::new(Cell::new(row_idx, 1)).with(color.clone()));
+        } else {
+            table.with(Modify::new(Cell::new(row_idx, 1)).with(match_style.clone()));
+        }
         table.with(Modify::new(Cell::new(row_idx, 2)).with(venue_style.clone()));
     }
 

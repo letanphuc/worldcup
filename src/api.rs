@@ -70,20 +70,17 @@ pub async fn fetch_events(days: Option<i64>) -> Result<Vec<MatchInfo>, Box<dyn s
     let now = Utc::now();
     let start_date = now.date_naive();
 
-    let num_days = days.unwrap_or(1);
+    let start_offset: i64 = if days.is_none() { -1 } else { 0 };
+    let num_days = days.unwrap_or(2);
 
     for i in 0..num_days {
-        let target_date = start_date + chrono::Duration::days(i);
+        let target_date = start_date + chrono::Duration::days(i + start_offset);
         let date_str = target_date.format("%Y%m%d").to_string();
 
-        let url = if i == 0 {
-            "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard".to_string()
-        } else {
-            format!(
-                "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates={}",
-                date_str
-            )
-        };
+        let url = format!(
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates={}",
+            date_str
+        );
 
         let resp: ScoreboardResponse = client.get(&url).send().await?.json().await?;
 
