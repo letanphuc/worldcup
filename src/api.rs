@@ -29,6 +29,7 @@ pub struct Competitor {
 pub struct Team {
     #[serde(rename = "shortDisplayName")]
     pub short_display_name: String,
+    pub abbreviation: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -53,6 +54,8 @@ pub struct MatchInfo {
     pub datetime: DateTime<Utc>,
     pub team_a: String,
     pub team_b: String,
+    pub code_a: String,
+    pub code_b: String,
     pub score_a: Option<String>,
     pub score_b: Option<String>,
     pub status_state: String,
@@ -96,10 +99,12 @@ pub async fn fetch_events(days: Option<i64>) -> Result<Vec<MatchInfo>, Box<dyn s
                 .map_err(|e| format!("failed to parse date '{}': {}", event.date, e))?;
                 let datetime: DateTime<Utc> = DateTime::from_naive_utc_and_offset(naive, Utc);
 
-                let (team_a, team_b, score_a, score_b) = if competition.competitors.len() >= 2 {
+                let (team_a, team_b, code_a, code_b, score_a, score_b) = if competition.competitors.len() >= 2 {
                     (
                         competition.competitors[0].team.short_display_name.clone(),
                         competition.competitors[1].team.short_display_name.clone(),
+                        competition.competitors[0].team.abbreviation.clone(),
+                        competition.competitors[1].team.abbreviation.clone(),
                         competition.competitors[0].score.clone(),
                         competition.competitors[1].score.clone(),
                     )
@@ -117,6 +122,8 @@ pub async fn fetch_events(days: Option<i64>) -> Result<Vec<MatchInfo>, Box<dyn s
                     datetime,
                     team_a,
                     team_b,
+                    code_a,
+                    code_b,
                     score_a,
                     score_b,
                     status_state: competition.status.type_.state.clone(),
