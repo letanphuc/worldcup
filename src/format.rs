@@ -290,7 +290,12 @@ pub fn build_table_rows(events: &[MatchInfo], is_next: bool) -> Vec<(MatchRow, R
             let (time, time_color) = time_status_text(e);
             let big_a = is_big_team(&e.code_a);
             let big_b = is_big_team(&e.code_b);
-            let match_ = format!("{} {} \x1b[90mvs\x1b[1;37m {} {}", flag(&e.code_a), e.team_a, flag(&e.code_b), e.team_b);
+            let mut match_ = format!("{} {} \x1b[90mvs\x1b[1;37m {} {}", flag(&e.code_a), e.team_a, flag(&e.code_b), e.team_b);
+            if e.status_state == "in" && !e.goals.is_empty() {
+                for goal in &e.goals {
+                    match_.push_str(&format!("\n  \x1b[90m{} {} {}\x1b[0m", flag(&goal.team_code), goal.minute, goal.scorer));
+                }
+            }
             let venue = e.venue.clone();
             let match_color = if big_a || big_b {
                 Some(Color::FG_YELLOW | Color::BOLD)
